@@ -2,7 +2,7 @@
 <html lang="fi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=1920" />
+  <meta name="viewport" content="width={{ screen_width }}" />
   <title>Lock Screen</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght,GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC@8..144,25..151,100..1000,-200..150,96,468,25..135,750,-203,738,514,712&display=swap');
@@ -53,8 +53,8 @@
     }
 
     html, body {
-      width: 1920px;
-      height: 1080px;
+      width: {{ screen_width }}px;
+      height: {{ screen_height }}px;
       overflow: hidden;
       background: var(--color-beige);
       font-family: 'Roboto Flex', sans-serif;
@@ -62,10 +62,13 @@
     }
 
     /* ── Screen container ─────────────────────────────────── */
+    /* Authored at 1920px wide; zoom scales to SCREEN_WIDTH.
+       effective_height = SCREEN_HEIGHT / scale so the zoomed div fills SCREEN_HEIGHT exactly. */
     .screen {
       position: relative;
       width: 1920px;
-      height: 1080px;
+      height: {{ effective_height }}px;
+      zoom: {{ scale }};
     }
 
     /* ── Heading "Muista." ────────────────────────────────── */
@@ -88,12 +91,17 @@
       position: absolute;
       left: 97px;
       top: 362px;
+      bottom: 0;
       width: 408px;
-      height: 718px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       padding-bottom: 24px;
+    }
+
+    /* Last card stretches to fill remaining stack height */
+    .task-card:last-child {
+      flex-grow: 1;
     }
 
     /* ── Task card ────────────────────────────────────────── */

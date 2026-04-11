@@ -8,7 +8,7 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader
 from playwright.sync_api import sync_playwright
 
-from core.config import OUTPUT_IMAGE_PATH
+from core.config import OUTPUT_IMAGE_PATH, SCREEN_WIDTH, SCREEN_HEIGHT
 
 # Resolve template directory relative to this file
 _TEMPLATE_DIR = Path(__file__).parent.parent / "template"
@@ -26,9 +26,15 @@ def render_lockscreen(tasks: list[dict[str, Any]]) -> Path:
     env = Environment(loader=FileSystemLoader(str(_TEMPLATE_DIR)), autoescape=True)
     template = env.get_template("lockscreen.html")
 
+    scale = SCREEN_WIDTH / 1920
     rendered_html = template.render(
         tasks=tasks,
         updated_at=datetime.now().strftime("%A, %d %B %Y  %H:%M"),
+        screen_width=SCREEN_WIDTH,
+        screen_height=SCREEN_HEIGHT,
+        scale=scale,
+        # Height of the design canvas in 1920-wide CSS px so that zoom fills SCREEN_HEIGHT exactly
+        effective_height=round(SCREEN_HEIGHT / scale),
     )
 
     with tempfile.NamedTemporaryFile(
@@ -53,7 +59,7 @@ def _screenshot(html_path: Path, output_path: Path) -> None:
     """Open html_path in a headless Chromium browser and save a full-page screenshot."""
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        page = browser.new_page(viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT})
         page.goto(html_path.as_uri())
         # Wait for fonts / any CSS transitions to settle
         page.wait_for_load_state("networkidle")

@@ -21,3 +21,8 @@ OUTPUT_IMAGE_PATH = CONFIG_DIR / "current.png"
 
 # OAuth scopes required for Google Tasks (read-only is sufficient)
 GOOGLE_TASKS_SCOPES = ["https://www.googleapis.com/auth/tasks.readonly"]
+
+# Output image resolution — default is MacBook Pro 16" native (3456×2234).
+# Override with SCREEN_WIDTH / SCREEN_HEIGHT env vars if needed.
+SCREEN_WIDTH  = int(os.getenv("SCREEN_WIDTH",  "3456"))
+SCREEN_HEIGHT = int(os.getenv("SCREEN_HEIGHT", "2234"))

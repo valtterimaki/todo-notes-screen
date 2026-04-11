@@ -18,6 +18,7 @@ from pathlib import Path
 from flask import Flask, jsonify
 from jinja2 import Environment, FileSystemLoader
 
+from core.config import SCREEN_HEIGHT, SCREEN_WIDTH
 from core.tasks import fetch_tasks
 
 app = Flask(__name__)
@@ -45,7 +46,15 @@ def preview() -> str:
     """Render the template with cached tasks on every request."""
     env = Environment(loader=FileSystemLoader(str(_TEMPLATE_DIR)), autoescape=True)
     template = env.get_template("lockscreen.html")
-    html = template.render(tasks=_tasks, updated_at=_updated_at)
+    scale = SCREEN_WIDTH / 1920
+    html = template.render(
+        tasks=_tasks,
+        updated_at=_updated_at,
+        screen_width=SCREEN_WIDTH,
+        screen_height=SCREEN_HEIGHT,
+        scale=scale,
+        effective_height=round(SCREEN_HEIGHT / scale),
+    )
 
     # Inject auto-reload script just before </body>
     reload_script = """
