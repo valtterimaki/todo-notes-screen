@@ -1,181 +1,211 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=1920" />
   <title>Lock Screen</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght,GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC@8..144,25..151,100..1000,-200..150,96,468,25..135,750,-203,738,514,712&display=swap');
 
-    /* ─── DESIGN TOKENS ───────────────────────────────────────────────────── */
-    :root {
-      --color-bg:            #0d0f14;
-      --color-panel-bg:      rgba(255, 255, 255, 0.06);
-      --color-panel-border:  rgba(255, 255, 255, 0.10);
-      --color-heading:       #ffffff;
-      --color-task:          #e2e6f0;
-      --color-meta:          rgba(255, 255, 255, 0.38);
-      --color-bullet:        #5b8dee;
-      --color-divider:       rgba(255, 255, 255, 0.08);
-      --color-timestamp:     rgba(255, 255, 255, 0.30);
-
-      --font-family:         'Google Sans Flex', system-ui, -apple-system, sans-serif;
-      --font-size-heading:   2rem;
-      --font-size-task:      1.35rem;
-      --font-size-meta:      0.85rem;
-      --font-size-timestamp: 0.8rem;
-
-      --spacing-panel-x:     3.5rem;
-      --spacing-panel-y:     3rem;
-      --spacing-task-gap:    1.1rem;
-      --panel-width:         680px;
-      --panel-radius:        20px;
-    }
-
-    /* ─── RESET & BASE ────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
       width: 1920px;
       height: 1080px;
       overflow: hidden;
-      font-family: var(--font-family);
-      background-color: var(--color-bg);
-      color: var(--color-task);
+      background: #d9d1cb;
+      font-family: 'Roboto Flex', sans-serif;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Subtle radial gradient to give depth to the background */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 900px 700px at 20% 50%, rgba(91, 141, 238, 0.08) 0%, transparent 70%),
-        radial-gradient(ellipse 600px 600px at 80% 20%, rgba(180, 120, 255, 0.05) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    /* ─── LAYOUT ──────────────────────────────────────────────────────────── */
+    /* ── Screen container ─────────────────────────────────── */
     .screen {
       position: relative;
       width: 1920px;
       height: 1080px;
+    }
+
+    /* ── Heading "Muista." ────────────────────────────────── */
+    .heading {
+      position: absolute;
+      left: 97px;
+      top: 237px;
+      transform: translateY(-50%);
+      font-size: 131px;
+      font-weight: 700;
+      color: #000;
+      letter-spacing: -2.62px;
+      line-height: 1;
+      white-space: nowrap;
+      font-variation-settings: 'GRAD' 80, 'XOPQ' 96, 'XTRA' 468, 'YOPQ' 79,
+        'YTAS' 750, 'YTDE' -203, 'YTFI' 738, 'YTLC' 514, 'YTUC' 712,
+        'wdth' 100, 'opsz' 40;
+    }
+
+    /* ── Task stack column ────────────────────────────────── */
+    .task-stack {
+      position: absolute;
+      left: 97px;
+      top: 362px;
+      width: 408px;
+      height: 718px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 24px;
+    }
+
+    /* ── Task card (base) ─────────────────────────────────── */
+    .task-card {
+      position: relative;
+      flex-shrink: 0;
+      width: 100%;
+      padding: 8px 8px 32px 56px;
+      margin-bottom: -24px;
+      background: #d9d1cb;
+      border-left: 1px solid rgba(0, 0, 0, 0.2);
+      border-right: 1px solid rgba(0, 0, 0, 0.2);
+      border-top: 1px solid rgba(0, 0, 0, 0.2);
+      border-radius: 24px 24px 0 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* Overdue: orange card, no borders */
+    .task-card--overdue {
+      background: #ff784f;
+      border-color: transparent;
+    }
+
+    /* ── Order number circle ──────────────────────────────── */
+    .task-num {
+      position: absolute;
+      left: 7px;
+      top: 7px;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      border-radius: 80px;
+      overflow: hidden;
       display: flex;
       align-items: center;
-      padding-left: 140px;
+      justify-content: center;
+      font-size: 18px;
+      color: #000;
+      letter-spacing: -0.36px;
+      font-variation-settings: 'GRAD' 0, 'XOPQ' 96, 'XTRA' 468, 'YOPQ' 101,
+        'YTAS' 750, 'YTDE' -203, 'YTFI' 738, 'YTLC' 514, 'YTUC' 712,
+        'wdth' 70, 'opsz' 45;
     }
 
-    /* ─── PANEL ───────────────────────────────────────────────────────────── */
-    .panel {
-      width: var(--panel-width);
-      max-height: 860px;
-      background: var(--color-panel-bg);
-      border: 1px solid var(--color-panel-border);
-      border-radius: var(--panel-radius);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      padding: var(--spacing-panel-y) var(--spacing-panel-x);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    /* ─── HEADING ─────────────────────────────────────────────────────────── */
-    .panel__heading {
-      font-size: var(--font-size-heading);
+    /* ── Task title ───────────────────────────────────────── */
+    .task-title {
+      font-size: 27px;
       font-weight: 600;
-      color: var(--color-heading);
-      letter-spacing: -0.02em;
-      margin-bottom: 0.3rem;
-    }
-
-    .panel__subheading {
-      font-size: var(--font-size-meta);
-      color: var(--color-meta);
-      font-weight: 400;
-      margin-bottom: 2rem;
-    }
-
-    .panel__divider {
-      height: 1px;
-      background: var(--color-divider);
-      margin-bottom: 1.75rem;
-    }
-
-    /* ─── TASK LIST ───────────────────────────────────────────────────────── */
-    .task-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-task-gap);
+      color: #000;
+      letter-spacing: -0.54px;
+      white-space: nowrap;
       overflow: hidden;
-      flex: 1;
+      text-overflow: ellipsis;
+      line-height: normal;
+      font-variation-settings: 'GRAD' 80, 'XOPQ' 96, 'XTRA' 468, 'YOPQ' 79,
+        'YTAS' 750, 'YTDE' -203, 'YTFI' 738, 'YTLC' 514, 'YTUC' 712,
+        'wdth' 100;
     }
 
-    .task-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.85rem;
+    /* ── Due date badge ───────────────────────────────────── */
+    .due-badge {
+      display: inline-flex;
+      align-items: center;
+      align-self: flex-start;
+      gap: 8px;
+      padding: 4px 12px 4px 4px;
+      border-radius: 56px;
     }
 
-    .task-item__bullet {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--color-bullet);
+    /* future: ghost pill, outlined */
+    .due-badge--future {
+      background: #d9d1cb;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    /* soon: yellow fill, no border */
+    .due-badge--soon {
+      background: #fff673;
+      border: none;
+    }
+
+    /* overdue: black fill, no border */
+    .due-badge--overdue {
+      background: #000;
+      border: none;
+    }
+
+    .due-badge__icon {
+      width: 20px;
+      height: 20px;
       flex-shrink: 0;
-      margin-top: 0.42em; /* vertically align with first line of text */
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .task-item__text {
-      font-size: var(--font-size-task);
-      font-weight: 400;
-      line-height: 1.45;
-      color: var(--color-task);
-      word-break: break-word;
-      overflow-wrap: break-word;
+    .due-badge__text {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: -0.26px;
+      white-space: nowrap;
+      color: #000;
+      line-height: normal;
+      font-variation-settings: 'GRAD' 0, 'XOPQ' 96, 'XTRA' 468, 'YOPQ' 101,
+        'YTAS' 750, 'YTDE' -203, 'YTFI' 738, 'YTLC' 514, 'YTUC' 712,
+        'wdth' 114, 'opsz' 45;
     }
 
-    /* ─── EMPTY STATE ─────────────────────────────────────────────────────── */
-    .empty-state {
-      font-size: var(--font-size-task);
-      color: var(--color-meta);
-      font-style: italic;
-    }
-
-    /* ─── TIMESTAMP ───────────────────────────────────────────────────────── */
-    .panel__timestamp {
-      margin-top: 2rem;
-      font-size: var(--font-size-timestamp);
-      color: var(--color-timestamp);
-      font-weight: 400;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
+    .due-badge--overdue .due-badge__text {
+      color: #ff784f;
     }
   </style>
 </head>
 <body>
   <div class="screen">
-    <div class="panel">
-      <h1 class="panel__heading">To&#8209;do</h1>
-      <p class="panel__subheading">Google Tasks &mdash; today's focus</p>
-      <div class="panel__divider"></div>
+    <h1 class="heading">Muista.</h1>
 
+    <div class="task-stack">
       {% if tasks %}
-        <ul class="task-list">
-          {% for task in tasks %}
-            <li class="task-item">
-              <span class="task-item__bullet" aria-hidden="true"></span>
-              <span class="task-item__text">{{ task.title }}</span>
-            </li>
-          {% endfor %}
-        </ul>
+        {% for task in tasks %}
+        <div class="task-card task-card--{{ task.due_state }}">
+          <span class="task-num">{{ loop.index }}</span>
+          <span class="task-title">{{ task.title }}</span>
+          {% if task.due_state != 'none' %}
+          <div class="due-badge due-badge--{{ task.due_state }}">
+            <span class="due-badge__icon">
+              {% if task.due_state == 'overdue' %}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="10" cy="10" r="8.5" stroke="white" stroke-width="1.5"/>
+                <line x1="10" y1="6" x2="10" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="10" cy="13.5" r="1" fill="white"/>
+              </svg>
+              {% else %}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="10" cy="10" r="8.5" stroke="black" stroke-width="1.5"/>
+                <path d="M10 6V10.5L13 12.5" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              {% endif %}
+            </span>
+            <span class="due-badge__text">{{ task.due_label }}</span>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
       {% else %}
-        <p class="empty-state">No pending tasks &mdash; enjoy your day.</p>
+        <div class="task-card">
+          <span class="task-num">—</span>
+          <span class="task-title">No tasks — enjoy your day.</span>
+        </div>
       {% endif %}
-
-      <p class="panel__timestamp">Updated {{ updated_at }}</p>
     </div>
   </div>
 </body>
