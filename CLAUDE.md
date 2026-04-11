@@ -42,4 +42,4 @@ python dev.py   # Flask at http://localhost:8080
 - Task list name is **IMPORTANT** (not the default Google Tasks list)
 - `flask` is in the venv but not in `requirements.txt` — add it if recreating the venv
 - Font: **Roboto Flex** loaded via Google Fonts `@import` with axes `opsz, wdth, wght, GRAD, XOPQ, XTRA, YOPQ, YTAS, YTDE, YTFI, YTLC, YTUC`
-- Scheduler plist exists at `scheduling/macos_launchd.plist` but has not been installed with `launchctl`
+- Scheduler plist exists at `scheduling/macos_launchd.plist` but has not been installed with `launchctl` 

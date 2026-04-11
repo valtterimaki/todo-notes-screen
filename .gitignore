@@ -21,3 +21,12 @@ temp_*.html
 
 # Windows
 Thumbs.db
+
+# Swift build artifacts
+app/.build/
+app/.swiftpm/
+*.xcodeproj/
+*.xcworkspace/
+
+# Built app bundle
+TodoNotesScreen.app/

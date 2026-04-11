@@ -2,10 +2,19 @@
 
 from __future__ import annotations
 
+import argparse
 import sys
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--no-wallpaper",
+        action="store_true",
+        help="Skip setting the wallpaper (used by the menu bar app, which sets it via NSWorkspace)",
+    )
+    args = parser.parse_args()
+
     from core.tasks import fetch_tasks
     from core.renderer import render_lockscreen
 
@@ -17,18 +26,18 @@ def main() -> None:
     image_path = render_lockscreen(tasks)
     print(f"  Image saved to: {image_path}")
 
-    print("Applying lock screen…")
-    platform = sys.platform
+    if not args.no_wallpaper:
+        print("Applying lock screen…")
+        platform = sys.platform
 
-    if platform == "darwin":
-        from platforms.macos import set_lockscreen
-        set_lockscreen(image_path)
-    elif platform == "win32":
-        from platforms.windows import set_lockscreen
-        set_lockscreen(image_path)
-    else:
-        print(f"  Platform '{platform}' is not supported. Image available at: {image_path}")
-        return
+        if platform == "darwin":
+            from platforms.macos import set_lockscreen
+            set_lockscreen(image_path)
+        elif platform == "win32":
+            from platforms.windows import set_lockscreen
+            set_lockscreen(image_path)
+        else:
+            print(f"  Platform '{platform}' is not supported. Image available at: {image_path}")
 
     print("Done.")
 
