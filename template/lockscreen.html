@@ -27,6 +27,7 @@
       --badge-background:  var(--color-beige);   /* ghost: same as bg */
       --badge-border:      1px;
       --badge-text:        var(--color-black);
+      --badge-icon:        var(--color-black);
       --card-border-width: 1px;                  /* card outline width */
     }
 
@@ -43,6 +44,12 @@
       --badge-background:  var(--color-black);
       --badge-border:      0px;
       --badge-text:        var(--color-orange);
+      --badge-icon:        var(--color-orange);
+    }
+
+    /* card immediately following an overdue card: drop its top border */
+    .task-card--overdue + .task-card {
+      border-top-width: 0px;
     }
 
     html, body {
@@ -66,12 +73,11 @@
       position: absolute;
       left: 97px;
       top: 180px;
-      font-size: 131px;
+      font-size: 130px;
       font-weight: 700;
       color: var(--text);
       letter-spacing: -2.62px;
       line-height: 1;
-      white-space: nowrap;
       font-variation-settings: 'GRAD' 80, 'XOPQ' 96, 'XTRA' 468, 'YOPQ' 79,
         'YTAS' 750, 'YTDE' -203, 'YTFI' 738, 'YTLC' 514, 'YTUC' 712,
         'wdth' 100, 'opsz' 40;
@@ -144,6 +150,27 @@
         'wdth' 100;
     }
 
+    /* ── Shared small-text style (notes + badge label) ──────── */
+    .text-sm {
+      font-size: 13px;
+      font-weight: 550;
+      letter-spacing: -0.26px;
+      line-height: normal;
+      font-variation-settings: 'GRAD' 0, 'XOPQ' 96, 'XTRA' 468, 'YOPQ' 101,
+        'YTAS' 750, 'YTDE' -203, 'YTFI' 738, 'YTLC' 514, 'YTUC' 712,
+        'wdth' 114, 'opsz' 45;
+    }
+
+    /* ── Task notes ──────────────────────────────────────── */
+    .task-notes {
+      color: var(--text);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
     /* ── Due date badge ───────────────────────────────────── */
     .due-badge {
       display: inline-flex;
@@ -163,18 +190,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      color: var(--badge-icon);
     }
 
     .due-badge__text {
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: -0.26px;
       white-space: nowrap;
       color: var(--badge-text);
-      line-height: normal;
-      font-variation-settings: 'GRAD' 0, 'XOPQ' 96, 'XTRA' 468, 'YOPQ' 101,
-        'YTAS' 750, 'YTDE' -203, 'YTFI' 738, 'YTLC' 514, 'YTUC' 712,
-        'wdth' 114, 'opsz' 45;
     }
   </style>
 </head>
@@ -188,23 +209,26 @@
         <div class="task-card task-card--{{ task.due_state }}">
           <span class="task-num">{{ loop.index }}</span>
           <span class="task-title">{{ task.title }}</span>
+          {% if task.notes %}
+          <span class="text-sm task-notes">{{ task.notes }}</span>
+          {% endif %}
           {% if task.due_state != 'none' %}
           <div class="due-badge">
             <span class="due-badge__icon">
               {% if task.due_state == 'overdue' %}
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="10" cy="10" r="8.5" stroke="white" stroke-width="1.5"/>
-                <line x1="10" y1="6" x2="10" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-                <circle cx="10" cy="13.5" r="1" fill="white"/>
+                <circle cx="10" cy="10" r="8.5" stroke="currentColor" stroke-width="1.5"/>
+                <line x1="10" y1="6" x2="10" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="10" cy="13.5" r="1" fill="currentColor"/>
               </svg>
               {% else %}
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="10" cy="10" r="8.5" stroke="black" stroke-width="1.5"/>
-                <path d="M10 6V10.5L13 12.5" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="10" cy="10" r="8.5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M10 6V10.5L13 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
               {% endif %}
             </span>
-            <span class="due-badge__text">{{ task.due_label }}</span>
+            <span class="text-sm due-badge__text">{{ task.due_label }}</span>
           </div>
           {% endif %}
         </div>
