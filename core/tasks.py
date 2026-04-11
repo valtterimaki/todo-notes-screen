@@ -65,14 +65,17 @@ def _format_due(due_str: str) -> str:
         today = datetime.now(timezone.utc).date()
         due_date = dt_utc.date()
 
+        FI_MONTHS = ["tammi", "helmi", "maalis", "huhti", "touko", "kesä",
+                     "heinä", "elo", "syys", "loka", "marras", "joulu"]
+
         if due_date == today:
-            date_label = "Today"
+            date_label = "Tänään"
         elif (due_date - today).days == 1:
-            date_label = "Tomorrow"
+            date_label = "Huomenna"
         elif (due_date - today).days == -1:
-            date_label = "Yesterday"
+            date_label = "Eilen"
         else:
-            date_label = dt_utc.strftime("%-d %b")
+            date_label = f"{due_date.day} {FI_MONTHS[due_date.month - 1]}"
 
         has_time = dt_utc.hour != 0 or dt_utc.minute != 0 or dt_utc.second != 0
         if has_time:
