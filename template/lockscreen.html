@@ -9,11 +9,47 @@
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── Base color palette (Figma: "base colors" collection) ── */
+    :root {
+      --color-beige:         #d9d1cb;
+      --color-black:         #000000;
+      --color-border-alpha:  rgba(0, 0, 0, 0.2);
+      --color-yellow:        #fff673;
+      --color-orange:        #ff784f;
+    }
+
+    /* ── State tokens (Figma: "states" collection) ────────────── */
+    /* Default = none / future: beige card, ghost badge            */
+    :root {
+      --background:        var(--color-beige);
+      --text:              var(--color-black);
+      --border:            var(--color-border-alpha);
+      --badge-background:  var(--color-beige);   /* ghost: same as bg */
+      --badge-border:      1px;
+      --badge-text:        var(--color-black);
+      --card-border-width: 1px;                  /* card outline width */
+    }
+
+    /* soon: yellow fill, no badge border */
+    .task-card--soon {
+      --badge-background: var(--color-yellow);
+      --badge-border:     0px;
+    }
+
+    /* overdue: orange card, black badge, orange badge text, no card outline */
+    .task-card--overdue {
+      --background:        var(--color-orange);
+      --card-border-width: 0px;
+      --badge-background:  var(--color-black);
+      --badge-border:      0px;
+      --badge-text:        var(--color-orange);
+    }
+
     html, body {
       width: 1920px;
       height: 1080px;
       overflow: hidden;
-      background: #d9d1cb;
+      background: var(--color-beige);
       font-family: 'Roboto Flex', sans-serif;
       -webkit-font-smoothing: antialiased;
     }
@@ -29,11 +65,10 @@
     .heading {
       position: absolute;
       left: 97px;
-      top: 237px;
-      transform: translateY(-50%);
+      top: 180px;
       font-size: 131px;
       font-weight: 700;
-      color: #000;
+      color: var(--text);
       letter-spacing: -2.62px;
       line-height: 1;
       white-space: nowrap;
@@ -55,28 +90,22 @@
       padding-bottom: 24px;
     }
 
-    /* ── Task card (base) ─────────────────────────────────── */
+    /* ── Task card ────────────────────────────────────────── */
     .task-card {
       position: relative;
       flex-shrink: 0;
       width: 100%;
       padding: 8px 8px 32px 56px;
       margin-bottom: -24px;
-      background: #d9d1cb;
-      border-left: 1px solid rgba(0, 0, 0, 0.2);
-      border-right: 1px solid rgba(0, 0, 0, 0.2);
-      border-top: 1px solid rgba(0, 0, 0, 0.2);
+      background: var(--background);
+      border-left:  var(--card-border-width) solid var(--border);
+      border-right: var(--card-border-width) solid var(--border);
+      border-top:   var(--card-border-width) solid var(--border);
       border-radius: 24px 24px 0 0;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       gap: 4px;
-    }
-
-    /* Overdue: orange card, no borders */
-    .task-card--overdue {
-      background: #ff784f;
-      border-color: transparent;
     }
 
     /* ── Order number circle ──────────────────────────────── */
@@ -86,14 +115,14 @@
       top: 7px;
       width: 32px;
       height: 32px;
-      border: 1px solid rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
       border-radius: 80px;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
-      color: #000;
+      color: var(--text);
       letter-spacing: -0.36px;
       font-variation-settings: 'GRAD' 0, 'XOPQ' 96, 'XTRA' 468, 'YOPQ' 101,
         'YTAS' 750, 'YTDE' -203, 'YTFI' 738, 'YTLC' 514, 'YTUC' 712,
@@ -104,7 +133,7 @@
     .task-title {
       font-size: 27px;
       font-weight: 600;
-      color: #000;
+      color: var(--text);
       letter-spacing: -0.54px;
       white-space: nowrap;
       overflow: hidden;
@@ -123,24 +152,8 @@
       gap: 8px;
       padding: 4px 12px 4px 4px;
       border-radius: 56px;
-    }
-
-    /* future: ghost pill, outlined */
-    .due-badge--future {
-      background: #d9d1cb;
-      border: 1px solid rgba(0, 0, 0, 0.2);
-    }
-
-    /* soon: yellow fill, no border */
-    .due-badge--soon {
-      background: #fff673;
-      border: none;
-    }
-
-    /* overdue: black fill, no border */
-    .due-badge--overdue {
-      background: #000;
-      border: none;
+      background: var(--badge-background);
+      border: var(--badge-border) solid var(--border);
     }
 
     .due-badge__icon {
@@ -157,15 +170,11 @@
       font-weight: 800;
       letter-spacing: -0.26px;
       white-space: nowrap;
-      color: #000;
+      color: var(--badge-text);
       line-height: normal;
       font-variation-settings: 'GRAD' 0, 'XOPQ' 96, 'XTRA' 468, 'YOPQ' 101,
         'YTAS' 750, 'YTDE' -203, 'YTFI' 738, 'YTLC' 514, 'YTUC' 712,
         'wdth' 114, 'opsz' 45;
-    }
-
-    .due-badge--overdue .due-badge__text {
-      color: #ff784f;
     }
   </style>
 </head>
@@ -180,7 +189,7 @@
           <span class="task-num">{{ loop.index }}</span>
           <span class="task-title">{{ task.title }}</span>
           {% if task.due_state != 'none' %}
-          <div class="due-badge due-badge--{{ task.due_state }}">
+          <div class="due-badge">
             <span class="due-badge__icon">
               {% if task.due_state == 'overdue' %}
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
