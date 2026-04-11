@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-16"?>
+<!--
+  Windows Task Scheduler import file.
+
+  HOW TO IMPORT:
+    1. Open Task Scheduler (taskschd.msc).
+    2. Action → Import Task…
+    3. Select this file.
+    4. Update the <Command> and <WorkingDirectory> paths below to match your setup.
+    5. On the General tab, tick "Run whether user is logged on or not" if you want
+       it to run at login even when the screen is locked.
+
+  Required edits before importing:
+    - Replace C:\Users\YOU\Documents\todo-notes-screen with the real project path.
+    - Replace C:\Users\YOU\AppData\Local\Programs\Python\Python312\python.exe
+      with the path to the Python executable inside your venv:
+        <venv>\Scripts\python.exe
+-->
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Update todo-notes lock screen every 30 minutes.</Description>
+    <URI>\todo-notes-screen\UpdateLockScreen</URI>
+  </RegistrationInfo>
+
+  <Triggers>
+    <!-- Run at log-on -->
+    <LogonTrigger>
+      <Enabled>true</Enabled>
+    </LogonTrigger>
+    <!-- Then repeat every 30 minutes indefinitely -->
+    <TimeTrigger>
+      <Repetition>
+        <Interval>PT30M</Interval>
+        <StopAtDurationEnd>false</StopAtDurationEnd>
+      </Repetition>
+      <StartBoundary>2024-01-01T00:00:00</StartBoundary>
+      <Enabled>true</Enabled>
+    </TimeTrigger>
+  </Triggers>
+
+  <Principals>
+    <Principal id="Author">
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <ExecutionTimeLimit>PT5M</ExecutionTimeLimit>
+    <Priority>7</Priority>
+  </Settings>
+
+  <Actions Context="Author">
+    <Exec>
+      <!-- Update both paths below -->
+      <Command>C:\Users\YOU\Documents\todo-notes-screen\venv\Scripts\python.exe</Command>
+      <Arguments>main.py</Arguments>
+      <WorkingDirectory>C:\Users\YOU\Documents\todo-notes-screen</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>

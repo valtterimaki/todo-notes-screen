@@ -1,0 +1,23 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment
+.env
+
+# Google Auth
+*.json
+*.pickle
+
+# Generated files
+*.png
+temp_*.html
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd plist — runs main.py every 30 minutes.
+
+  HOW TO INSTALL:
+    1. Edit the paths below (search for /Users/YOU).
+    2. Copy this file to ~/Library/LaunchAgents/:
+         cp scheduling/macos_launchd.plist \
+            ~/Library/LaunchAgents/com.todo-notes-screen.update.plist
+    3. Load it:
+         launchctl load ~/Library/LaunchAgents/com.todo-notes-screen.update.plist
+    4. To unload:
+         launchctl unload ~/Library/LaunchAgents/com.todo-notes-screen.update.plist
+
+  Required edits:
+    - Replace /Users/YOU/Documents/todo-notes-screen with the real project path.
+    - The <string> under ProgramArguments[0] must point to the Python binary
+      inside your venv:  <project>/venv/bin/python3
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.todo-notes-screen.update</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <!-- Python inside the project venv -->
+    <string>/Users/YOU/Documents/todo-notes-screen/venv/bin/python3</string>
+    <string>main.py</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/YOU/Documents/todo-notes-screen</string>
+
+  <!-- Run every 30 minutes (1800 seconds) -->
+  <key>StartInterval</key>
+  <integer>1800</integer>
+
+  <!-- Also run when the agent is first loaded -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/YOU/.config/todo-notes-screen/launchd_stdout.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/YOU/.config/todo-notes-screen/launchd_stderr.log</string>
+
+  <!-- Throttle: don't restart more often than every 60 s if it crashes -->
+  <key>ThrottleInterval</key>
+  <integer>60</integer>
+</dict>
+</plist>

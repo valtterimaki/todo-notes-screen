@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920" />
+  <title>Lock Screen</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..900&display=swap');
+
+    /* ─── DESIGN TOKENS ───────────────────────────────────────────────────── */
+    :root {
+      --color-bg:            #0d0f14;
+      --color-panel-bg:      rgba(255, 255, 255, 0.06);
+      --color-panel-border:  rgba(255, 255, 255, 0.10);
+      --color-heading:       #ffffff;
+      --color-task:          #e2e6f0;
+      --color-meta:          rgba(255, 255, 255, 0.38);
+      --color-bullet:        #5b8dee;
+      --color-divider:       rgba(255, 255, 255, 0.08);
+      --color-timestamp:     rgba(255, 255, 255, 0.30);
+
+      --font-family:         'Google Sans Flex', system-ui, -apple-system, sans-serif;
+      --font-size-heading:   2rem;
+      --font-size-task:      1.35rem;
+      --font-size-meta:      0.85rem;
+      --font-size-timestamp: 0.8rem;
+
+      --spacing-panel-x:     3.5rem;
+      --spacing-panel-y:     3rem;
+      --spacing-task-gap:    1.1rem;
+      --panel-width:         680px;
+      --panel-radius:        20px;
+    }
+
+    /* ─── RESET & BASE ────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      font-family: var(--font-family);
+      background-color: var(--color-bg);
+      color: var(--color-task);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Subtle radial gradient to give depth to the background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 900px 700px at 20% 50%, rgba(91, 141, 238, 0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 600px 600px at 80% 20%, rgba(180, 120, 255, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ─── LAYOUT ──────────────────────────────────────────────────────────── */
+    .screen {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      display: flex;
+      align-items: center;
+      padding-left: 140px;
+    }
+
+    /* ─── PANEL ───────────────────────────────────────────────────────────── */
+    .panel {
+      width: var(--panel-width);
+      max-height: 860px;
+      background: var(--color-panel-bg);
+      border: 1px solid var(--color-panel-border);
+      border-radius: var(--panel-radius);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: var(--spacing-panel-y) var(--spacing-panel-x);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── HEADING ─────────────────────────────────────────────────────────── */
+    .panel__heading {
+      font-size: var(--font-size-heading);
+      font-weight: 600;
+      color: var(--color-heading);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.3rem;
+    }
+
+    .panel__subheading {
+      font-size: var(--font-size-meta);
+      color: var(--color-meta);
+      font-weight: 400;
+      margin-bottom: 2rem;
+    }
+
+    .panel__divider {
+      height: 1px;
+      background: var(--color-divider);
+      margin-bottom: 1.75rem;
+    }
+
+    /* ─── TASK LIST ───────────────────────────────────────────────────────── */
+    .task-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-task-gap);
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+    }
+
+    .task-item__bullet {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-bullet);
+      flex-shrink: 0;
+      margin-top: 0.42em; /* vertically align with first line of text */
+    }
+
+    .task-item__text {
+      font-size: var(--font-size-task);
+      font-weight: 400;
+      line-height: 1.45;
+      color: var(--color-task);
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    /* ─── EMPTY STATE ─────────────────────────────────────────────────────── */
+    .empty-state {
+      font-size: var(--font-size-task);
+      color: var(--color-meta);
+      font-style: italic;
+    }
+
+    /* ─── TIMESTAMP ───────────────────────────────────────────────────────── */
+    .panel__timestamp {
+      margin-top: 2rem;
+      font-size: var(--font-size-timestamp);
+      color: var(--color-timestamp);
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="panel">
+      <h1 class="panel__heading">To&#8209;do</h1>
+      <p class="panel__subheading">Google Tasks &mdash; today's focus</p>
+      <div class="panel__divider"></div>
+
+      {% if tasks %}
+        <ul class="task-list">
+          {% for task in tasks %}
+            <li class="task-item">
+              <span class="task-item__bullet" aria-hidden="true"></span>
+              <span class="task-item__text">{{ task.title }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-state">No pending tasks &mdash; enjoy your day.</p>
+      {% endif %}
+
+      <p class="panel__timestamp">Updated {{ updated_at }}</p>
+    </div>
+  </div>
+</body>
+</html>
