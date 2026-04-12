@@ -16,9 +16,6 @@ __pycache__/
 *.png
 temp_*.html
 
-# Claude AI instructions
-CLAUDE.md
-
 # macOS
 .DS_Store
 
