@@ -5,8 +5,8 @@ Fetches Google Tasks → renders HTML at native screen resolution → sets as ma
 ## Pipeline
 `main.py` → `core/tasks.py` → `core/renderer.py` → `template/lockscreen.html` → `platforms/macos.py` or `platforms/windows.py`
 
-- `tasks.py` — OAuth + Google Tasks API; normalises into `{title, notes, due_label, due_state, subtasks[]}`
-- `renderer.py` — Jinja2 → temp HTML; Playwright (headless Chromium) screenshots at `SCREEN_WIDTH × SCREEN_HEIGHT`
+- `tasks.py` — OAuth + Google Tasks API; `fetch_tasks()` normalises the selected list into `{title, notes, due_label, due_state, subtasks[]}`; `fetch_other_lists()` returns `[{title, tasks:[{title}]}]` for all other lists (incomplete top-level tasks only)
+- `renderer.py` — Jinja2 → temp HTML; Playwright (headless Chromium) screenshots at `SCREEN_WIDTH × SCREEN_HEIGHT`; accepts `tasks` and `other_lists`
 - `lockscreen.html` — sole visual file; authored at 1920 px wide, CSS `zoom`-scaled to native res
 - `config.py` — paths, env vars; `SCREEN_WIDTH=3456`, `SCREEN_HEIGHT=2234` (MacBook Pro 16" native)
 
@@ -42,6 +42,15 @@ State classes (`.task-card--soon`, `.task-card--overdue`) override only the toke
 - **Heading / task title:** `'GRAD' 80, 'XOPQ' 96, 'XTRA' 468, 'YOPQ' 79, 'YTAS' 750, 'YTDE' -203, 'YTFI' 738, 'YTLC' 514, 'YTUC' 712, 'wdth' 100`
 - **Badge / notes text:** same but `'wdth' 114, 'opsz' 45` (wider)
 - **Order number circle:** same as badge but `'wdth' 70`
+
+### Other lists panel (right side of screen)
+All task lists except the selected one are shown to the right as a flowing text panel:
+- `fetch_other_lists()` in `tasks.py` fetches them; passed as `other_lists` to the template
+- Layout: `flex-direction: column; flex-wrap: wrap-reverse` — content fills rightmost column first, then wraps leftward
+- Container: `position: absolute; left: 986px; right: 120px; top: 362px`; height set inline as `{{ effective_height - 362 - 120 }}px` (120 px bottom safe area)
+- Each list: title (bold) + individual `<p>` per task name; truncated to one line with ellipsis
+- **Anchor structure**: title + first 3 tasks wrapped in `.other-list__anchor` (`display: block`) — this is a single flex item so the group moves to the next column together if it would leave fewer than 4 items isolated. Tasks 4+ flow freely.
+- 32px `<span class="other-list__spacer">` between lists; `column-gap: 32px` between columns; `max-width: 280px` on items
 
 ### Figma workflow
 When the user shares a Figma URL or asks for a visual change: call `get_design_context` (nodeId + fileKey) and `get_variable_defs` before writing any CSS. The file has a "base colors" collection and a "states" collection — inspect both to map token values before touching the template.
