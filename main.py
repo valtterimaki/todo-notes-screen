@@ -13,7 +13,18 @@ def main() -> None:
         action="store_true",
         help="Skip setting the wallpaper (used by the menu bar app, which sets it via NSWorkspace)",
     )
+    parser.add_argument(
+        "--list-task-lists",
+        action="store_true",
+        help="Print all Google Tasks lists as JSON and exit",
+    )
     args = parser.parse_args()
+
+    if args.list_task_lists:
+        import json
+        from core.tasks import get_task_lists
+        print(json.dumps(get_task_lists()))
+        return
 
     from core.tasks import fetch_tasks
     from core.renderer import render_lockscreen

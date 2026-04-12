@@ -1,6 +1,11 @@
 import Foundation
 import ServiceManagement
 
+struct TaskListItem: Identifiable, Decodable {
+    let id: String
+    let title: String
+}
+
 @MainActor
 class AppState: ObservableObject {
     @Published var isRunning: Bool = true
@@ -8,6 +13,8 @@ class AppState: ObservableObject {
     @Published var lastUpdated: Date? = nil
     @Published var lastError: String? = nil
     @Published var launchAtLogin: Bool = false
+    @Published var availableLists: [TaskListItem] = []
+    @Published var selectedListName: String = "IMPORTANT"
 
     private var refreshTimer: Timer?
     private let intervalSeconds: TimeInterval = 30 * 60
@@ -16,6 +23,7 @@ class AppState: ObservableObject {
     private let pythonPath: String
     private let mainScriptPath: String
     private let imagePath: String
+    private let settingsPath: String
 
     init() {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
@@ -23,11 +31,14 @@ class AppState: ObservableObject {
         self.pythonPath = "\(home)/Documents/todo-notes-screen/venv/bin/python3"
         self.mainScriptPath = "\(home)/Documents/todo-notes-screen/main.py"
         self.imagePath = "\(home)/.config/todo-notes-screen/current.png"
+        self.settingsPath = "\(home)/.config/todo-notes-screen/settings.json"
 
         self.launchAtLogin = SMAppService.mainApp.status == .enabled
+        self.selectedListName = Self.readSelectedList(from: "\(home)/.config/todo-notes-screen/settings.json")
 
         scheduleTimer()
         Task { await refresh() }
+        Task { await fetchAvailableLists() }
     }
 
     func start() {
@@ -88,6 +99,43 @@ class AppState: ObservableObject {
         isRefreshing = false
     }
 
+    func fetchAvailableLists() async {
+        let python = pythonPath
+        let script = mainScriptPath
+        let dir = projectDir
+
+        let result: Result<[TaskListItem], Error> = await Task.detached(priority: .background) {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: python)
+            process.arguments = [script, "--list-task-lists"]
+            process.currentDirectoryURL = URL(fileURLWithPath: dir)
+
+            let stdoutPipe = Pipe()
+            process.standardOutput = stdoutPipe
+            process.standardError = Pipe()
+
+            do {
+                try process.run()
+                process.waitUntilExit()
+                let data = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+                let items = try JSONDecoder().decode([TaskListItem].self, from: data)
+                return .success(items)
+            } catch {
+                return .failure(error)
+            }
+        }.value
+
+        if case .success(let lists) = result {
+            availableLists = lists
+        }
+    }
+
+    func selectList(_ name: String) async {
+        selectedListName = name
+        saveSelectedList(name)
+        await refresh()
+    }
+
     func toggleLaunchAtLogin() {
         do {
             if launchAtLogin {
@@ -99,6 +147,22 @@ class AppState: ObservableObject {
             }
         } catch {
             lastError = "Login item: \(error.localizedDescription)"
+        }
+    }
+
+    private static func readSelectedList(from path: String) -> String {
+        guard let data = FileManager.default.contents(atPath: path),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let name = json["task_list"] as? String else {
+            return "IMPORTANT"
+        }
+        return name
+    }
+
+    private func saveSelectedList(_ name: String) {
+        let json: [String: Any] = ["task_list": name]
+        if let data = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+            try? data.write(to: URL(fileURLWithPath: settingsPath))
         }
     }
 

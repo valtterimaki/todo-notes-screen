@@ -18,6 +18,7 @@ CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 CREDENTIALS_PATH = CONFIG_DIR / "credentials.json"
 TOKEN_PATH = CONFIG_DIR / "token.json"
 OUTPUT_IMAGE_PATH = CONFIG_DIR / "current.png"
+SETTINGS_PATH = CONFIG_DIR / "settings.json"
 
 # OAuth scopes required for Google Tasks (read-only is sufficient)
 GOOGLE_TASKS_SCOPES = ["https://www.googleapis.com/auth/tasks.readonly"]

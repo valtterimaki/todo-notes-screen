@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from typing import Any
 
@@ -8,7 +9,17 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from core.config import CREDENTIALS_PATH, TOKEN_PATH, GOOGLE_TASKS_SCOPES
+from core.config import CREDENTIALS_PATH, TOKEN_PATH, GOOGLE_TASKS_SCOPES, SETTINGS_PATH
+
+
+def _get_selected_list_name() -> str:
+    if SETTINGS_PATH.exists():
+        try:
+            data = json.loads(SETTINGS_PATH.read_text())
+            return data.get("task_list", "IMPORTANT")
+        except (json.JSONDecodeError, OSError):
+            pass
+    return "IMPORTANT"
 
 
 def _get_credentials() -> Credentials:
@@ -87,8 +98,16 @@ def _format_due(due_str: str) -> str:
         return due_str
 
 
+def get_task_lists() -> list[dict[str, str]]:
+    """Return all Google Tasks lists as [{id, title}]."""
+    creds = _get_credentials()
+    service = build("tasks", "v1", credentials=creds)
+    task_lists = service.tasklists().list(maxResults=100).execute()
+    return [{"id": tl["id"], "title": tl["title"]} for tl in task_lists.get("items", [])]
+
+
 def fetch_tasks() -> list[dict[str, Any]]:
-    """Return all incomplete tasks from the 'IMPORTANT' Google Tasks list.
+    """Return all incomplete tasks from the selected Google Tasks list.
 
     Each top-level task dict contains:
       - title (str)
@@ -99,13 +118,14 @@ def fetch_tasks() -> list[dict[str, Any]]:
     creds = _get_credentials()
     service = build("tasks", "v1", credentials=creds)
 
+    list_name = _get_selected_list_name()
     task_lists = service.tasklists().list(maxResults=100).execute()
     important_list = next(
-        (tl for tl in task_lists.get("items", []) if tl.get("title") == "IMPORTANT"),
+        (tl for tl in task_lists.get("items", []) if tl.get("title") == list_name),
         None,
     )
     if not important_list:
-        raise ValueError("No task list named 'IMPORTANT' found.")
+        raise ValueError(f"No task list named '{list_name}' found.")
 
     result = (
         service.tasks()

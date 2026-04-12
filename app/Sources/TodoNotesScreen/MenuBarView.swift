@@ -34,6 +34,27 @@ struct MenuBarView: View {
 
         Divider()
 
+        Menu("List: \(appState.selectedListName)") {
+            if appState.availableLists.isEmpty {
+                Text("Loading…")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(appState.availableLists) { list in
+                    Button {
+                        Task { await appState.selectList(list.title) }
+                    } label: {
+                        if list.title == appState.selectedListName {
+                            Label(list.title, systemImage: "checkmark")
+                        } else {
+                            Text(list.title)
+                        }
+                    }
+                }
+            }
+        }
+
+        Divider()
+
         Button(appState.launchAtLogin ? "✓ Launch at Login" : "Launch at Login") {
             appState.toggleLaunchAtLogin()
         }
