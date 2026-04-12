@@ -98,6 +98,43 @@ def _format_due(due_str: str) -> str:
         return due_str
 
 
+def fetch_other_lists() -> list[dict[str, Any]]:
+    """Return tasks from all lists except the currently selected one.
+
+    Returns [{title, tasks: [{title}]}] — only incomplete, top-level tasks.
+    """
+    creds = _get_credentials()
+    service = build("tasks", "v1", credentials=creds)
+
+    selected_name = _get_selected_list_name()
+    task_lists = service.tasklists().list(maxResults=100).execute()
+    other_lists = [tl for tl in task_lists.get("items", []) if tl.get("title") != selected_name]
+
+    result = []
+    for tl in other_lists:
+        tasks_result = (
+            service.tasks()
+            .list(
+                tasklist=tl["id"],
+                showCompleted=False,
+                showHidden=False,
+                maxResults=100,
+            )
+            .execute()
+        )
+        raw = [
+            t for t in tasks_result.get("items", [])
+            if t.get("status") != "completed" and not t.get("parent")
+        ]
+        raw.sort(key=lambda t: t.get("position", ""))
+        result.append({
+            "title": tl["title"],
+            "tasks": [{"title": t.get("title", "")} for t in raw],
+        })
+
+    return result
+
+
 def get_task_lists() -> list[dict[str, str]]:
     """Return all Google Tasks lists as [{id, title}]."""
     creds = _get_credentials()

@@ -14,7 +14,7 @@ from core.config import OUTPUT_IMAGE_PATH, SCREEN_WIDTH, SCREEN_HEIGHT
 _TEMPLATE_DIR = Path(__file__).parent.parent / "template"
 
 
-def render_lockscreen(tasks: list[dict[str, Any]]) -> Path:
+def render_lockscreen(tasks: list[dict[str, Any]], other_lists: list[dict[str, Any]] | None = None) -> Path:
     """
     Render tasks into a 1920×1080 PNG lock-screen image.
 
@@ -29,6 +29,7 @@ def render_lockscreen(tasks: list[dict[str, Any]]) -> Path:
     scale = SCREEN_WIDTH / 1920
     rendered_html = template.render(
         tasks=tasks,
+        other_lists=other_lists or [],
         updated_at=datetime.now().strftime("%A, %d %B %Y  %H:%M"),
         screen_width=SCREEN_WIDTH,
         screen_height=SCREEN_HEIGHT,

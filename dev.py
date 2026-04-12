@@ -19,7 +19,7 @@ from flask import Flask, jsonify
 from jinja2 import Environment, FileSystemLoader
 
 from core.config import SCREEN_HEIGHT, SCREEN_WIDTH
-from core.tasks import fetch_tasks
+from core.tasks import fetch_tasks, fetch_other_lists
 
 app = Flask(__name__)
 
@@ -28,15 +28,17 @@ _TEMPLATE_PATH = _TEMPLATE_DIR / "lockscreen.html"
 
 # Cache tasks in memory so we don't hit the API on every page load
 _tasks: list[dict] = []
+_other_lists: list[dict] = []
 _updated_at: str = ""
 
 
 def _load_tasks() -> None:
-    global _tasks, _updated_at
+    global _tasks, _other_lists, _updated_at
     print("Fetching tasks from Google Tasks…")
     _tasks = fetch_tasks()
+    _other_lists = fetch_other_lists()
     _updated_at = datetime.now().strftime("%A, %d %B %Y  %H:%M")
-    print(f"  {len(_tasks)} task(s) loaded.")
+    print(f"  {len(_tasks)} task(s) loaded, {len(_other_lists)} other list(s) fetched.")
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -49,6 +51,7 @@ def preview() -> str:
     scale = SCREEN_WIDTH / 1920
     html = template.render(
         tasks=_tasks,
+        other_lists=_other_lists,
         updated_at=_updated_at,
         screen_width=SCREEN_WIDTH,
         screen_height=SCREEN_HEIGHT,
@@ -86,7 +89,7 @@ def mtime() -> str:
 def refresh_tasks():
     """Re-fetch tasks from Google Tasks without restarting the server."""
     _load_tasks()
-    return jsonify(count=len(_tasks), updated_at=_updated_at)
+    return jsonify(count=len(_tasks), other_lists=len(_other_lists), updated_at=_updated_at)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

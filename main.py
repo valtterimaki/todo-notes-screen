@@ -42,15 +42,17 @@ def main() -> None:
         print(json.dumps(get_task_lists()))
         return
 
-    from core.tasks import fetch_tasks
+    from core.tasks import fetch_tasks, fetch_other_lists
     from core.renderer import render_lockscreen
 
     print("Fetching tasks from Google Tasks…")
     tasks = fetch_tasks()
     print(f"  {len(tasks)} incomplete task(s) found.")
+    other_lists = fetch_other_lists()
+    print(f"  {len(other_lists)} other list(s) fetched.")
 
     print("Rendering lock screen image…")
-    image_path = render_lockscreen(tasks)
+    image_path = render_lockscreen(tasks, other_lists)
     print(f"  Image saved to: {image_path}")
 
     if not args.no_wallpaper:

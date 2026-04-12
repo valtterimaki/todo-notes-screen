@@ -205,6 +205,61 @@
       white-space: nowrap;
       color: var(--badge-text);
     }
+
+    /* ── Other lists (flex column wrap) ──────────────────── */
+    /* flex-direction: column + flex-wrap: wrap creates columns that size to
+       their widest item. Items flow top-to-bottom then wrap left-to-right.
+       Height is set inline so columns wrap before the bottom safe area.    */
+    .other-lists {
+      position: absolute;
+      left: 986px;
+      right: 120px;
+      top: 362px;
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap-reverse;
+      align-content: flex-start;
+      align-items: flex-end;
+      column-gap: 32px;
+      font-size: 14px;
+      color: var(--color-black);
+      letter-spacing: 0.14px;
+      font-variation-settings: 'GRAD' 0, 'XOPQ' 96, 'XTRA' 468, 'YOPQ' 101,
+        'YTAS' 750, 'YTDE' -203, 'YTFI' 738, 'YTLC' 514, 'YTUC' 712,
+        'wdth' 114, 'opsz' 45;
+    }
+
+    /* Title + first 3 tasks are a single flex item so they always move
+       together if they don't fit at the bottom of a column */
+    .other-list__anchor {
+      display: block;
+    }
+
+    .other-list__title {
+      font-weight: 700;
+      line-height: normal;
+      margin-bottom: 8px;
+      max-width: 280px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .other-list__spacer {
+      display: block;
+      width: 0;
+      height: 32px;
+    }
+
+    .other-list__task {
+      font-weight: 400;
+      line-height: 1;
+      margin-bottom: 2px;
+      max-width: 280px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   </style>
 </head>
 <body>
@@ -248,6 +303,22 @@
         </div>
       {% endif %}
     </div>
+    {% if other_lists %}
+    <div class="other-lists" style="height: {{ effective_height - 362 - 120 }}px;">
+      {% for lst in other_lists %}
+      {% if not loop.first %}<span class="other-list__spacer"></span>{% endif %}
+      <div class="other-list__anchor">
+        <p class="other-list__title">{{ lst.title }}</p>
+        {% for task in lst.tasks[:3] %}
+        <p class="other-list__task">{{ task.title }}</p>
+        {% endfor %}
+      </div>
+      {% for task in lst.tasks[3:] %}
+      <p class="other-list__task">{{ task.title }}</p>
+      {% endfor %}
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
 </body>
 </html>
