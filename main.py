@@ -18,7 +18,23 @@ def main() -> None:
         action="store_true",
         help="Print all Google Tasks lists as JSON and exit",
     )
+    parser.add_argument(
+        "--fingerprint",
+        action="store_true",
+        help="Print a SHA-256 hash of the current task list and exit (no render)",
+    )
     args = parser.parse_args()
+
+    if args.fingerprint:
+        import hashlib
+        import json
+        from core.tasks import fetch_tasks
+        tasks = fetch_tasks()
+        fp = hashlib.sha256(
+            json.dumps(tasks, sort_keys=True, ensure_ascii=False).encode()
+        ).hexdigest()
+        print(fp)
+        return
 
     if args.list_task_lists:
         import json

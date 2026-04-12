@@ -2,7 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  launchd plist — runs main.py every 30 minutes.
+  launchd plist — alternative to the menu bar app; runs main.py on a schedule.
+  NOTE: if you're using the menu bar app, you don't need this.
 
   HOW TO INSTALL:
     1. Edit the paths below (search for /Users/YOU).

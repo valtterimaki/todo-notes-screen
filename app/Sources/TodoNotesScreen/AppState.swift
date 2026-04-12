@@ -17,7 +17,8 @@ class AppState: ObservableObject {
     @Published var selectedListName: String = "IMPORTANT"
 
     private var refreshTimer: Timer?
-    private let intervalSeconds: TimeInterval = 30 * 60
+    private let intervalSeconds: TimeInterval = 2 * 60
+    private var lastFingerprint: String? = nil
 
     private let projectDir: String
     private let pythonPath: String
@@ -62,22 +63,44 @@ class AppState: ObservableObject {
         let script = mainScriptPath
         let dir = projectDir
         let image = imagePath
+        let knownFingerprint = lastFingerprint
 
-        let result: Result<Void, Error> = await Task.detached(priority: .background) {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: python)
-            process.arguments = [script, "--no-wallpaper"]
-            process.currentDirectoryURL = URL(fileURLWithPath: dir)
-
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            process.standardError = pipe
-
+        let result: Result<String?, Error> = await Task.detached(priority: .background) {
+            // Step 1: fast fingerprint check — just fetches tasks and hashes them, no render
+            var newFingerprint: String? = nil
+            let fpProcess = Process()
+            fpProcess.executableURL = URL(fileURLWithPath: python)
+            fpProcess.arguments = [script, "--fingerprint"]
+            fpProcess.currentDirectoryURL = URL(fileURLWithPath: dir)
+            let fpPipe = Pipe()
+            fpProcess.standardOutput = fpPipe
+            fpProcess.standardError = Pipe()
             do {
-                try process.run()
-                process.waitUntilExit()
-                if process.terminationStatus == 0 {
-                    return .success(())
+                try fpProcess.run()
+                fpProcess.waitUntilExit()
+                let data = fpPipe.fileHandleForReading.readDataToEndOfFile()
+                let fingerprint = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                if fingerprint == knownFingerprint {
+                    return .success(nil) // nil = no change, skip render
+                }
+                newFingerprint = fingerprint
+            } catch {
+                // If fingerprint check fails, fall through to full render
+            }
+
+            // Step 2: tasks changed (or fingerprint check failed) — do the full render
+            let renderProcess = Process()
+            renderProcess.executableURL = URL(fileURLWithPath: python)
+            renderProcess.arguments = [script, "--no-wallpaper"]
+            renderProcess.currentDirectoryURL = URL(fileURLWithPath: dir)
+            let pipe = Pipe()
+            renderProcess.standardOutput = pipe
+            renderProcess.standardError = pipe
+            do {
+                try renderProcess.run()
+                renderProcess.waitUntilExit()
+                if renderProcess.terminationStatus == 0 {
+                    return .success(newFingerprint ?? "")
                 } else {
                     let data = pipe.fileHandleForReading.readDataToEndOfFile()
                     let output = String(data: data, encoding: .utf8) ?? "Unknown error"
@@ -89,9 +112,14 @@ class AppState: ObservableObject {
         }.value
 
         switch result {
-        case .success:
-            WallpaperManager.set(path: image)
-            lastUpdated = Date()
+        case .success(let newFingerprint):
+            if let fp = newFingerprint {
+                // Tasks changed — apply wallpaper and record new fingerprint
+                lastFingerprint = fp
+                WallpaperManager.set(path: image)
+                lastUpdated = Date()
+            }
+            // nil means no change — do nothing
         case .failure(let error):
             lastError = error.localizedDescription
         }
