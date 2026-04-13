@@ -61,7 +61,7 @@ Source: `app/Sources/TodoNotesScreen/`. Built app: `TodoNotesScreen.app` (instal
 **Refresh loop (every 2 minutes):**
 1. `main.py --fingerprint` → compare SHA-256; if unchanged, skip
 2. `main.py --no-wallpaper` → render PNG
-3. `WallpaperManager.set()` — calls `desktoppr` if installed (sets both desktop + lock screen via private WallpaperKit APIs); falls back to `NSWorkspace.setDesktopImageURL` (desktop only) if not
+3. `WallpaperManager.set()` — copies PNG to a unique timestamped path (busts macOS URL cache — required for both desktoppr and NSWorkspace), then calls `desktoppr` if installed (sets both desktop + lock screen via private WallpaperKit APIs) or falls back to `NSWorkspace.setDesktopImageURL` (desktop only); cleans up stale copies
 4. `AppState` also re-applies the wallpaper on `screensDidWakeNotification` to prevent macOS from reverting on display wake
 
 **Menu bar features:** status line, Refresh Now, Pause/Resume, task list picker, Launch at Login (`SMAppService`), Quit
