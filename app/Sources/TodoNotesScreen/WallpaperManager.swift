@@ -12,16 +12,8 @@ enum WallpaperManager {
     static func set(path: String) {
         guard FileManager.default.fileExists(atPath: path) else { return }
 
-        if let desktoppr = desktopprPath() {
-            let p = Process()
-            p.executableURL = URL(fileURLWithPath: desktoppr)
-            p.arguments = [path]
-            try? p.run()
-            p.waitUntilExit()
-            return
-        }
-
-        // Fallback: NSWorkspace (desktop only — lock screen won't update on Sonoma+)
+        // macOS caches wallpapers by URL — copy to a unique timestamped path each time
+        // so both desktoppr and NSWorkspace see a "new" URL and reload the image content.
         let source = URL(fileURLWithPath: path)
         let dir = source.deletingLastPathComponent()
         let unique = dir.appendingPathComponent("wallpaper_\(Int(Date().timeIntervalSince1970)).png")
@@ -29,19 +21,32 @@ enum WallpaperManager {
         do {
             try FileManager.default.copyItem(at: source, to: unique)
         } catch {
-            for screen in NSScreen.screens {
-                try? NSWorkspace.shared.setDesktopImageURL(source, for: screen, options: [:])
-            }
+            // Copy failed — fall back to original path (may not refresh visually)
+            applyWallpaper(path: path)
             return
         }
 
-        for screen in NSScreen.screens {
-            try? NSWorkspace.shared.setDesktopImageURL(unique, for: screen, options: [:])
-        }
+        applyWallpaper(path: unique.path)
 
         let stale = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
         for file in stale where file.lastPathComponent.hasPrefix("wallpaper_") && file != unique {
             try? FileManager.default.removeItem(at: file)
+        }
+    }
+
+    private static func applyWallpaper(path: String) {
+        if let desktoppr = desktopprPath() {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: desktoppr)
+            p.arguments = [path]
+            try? p.run()
+            p.waitUntilExit()
+        } else {
+            // Fallback: desktop only — lock screen won't update on Sonoma+
+            let url = URL(fileURLWithPath: path)
+            for screen in NSScreen.screens {
+                try? NSWorkspace.shared.setDesktopImageURL(url, for: screen, options: [:])
+            }
         }
     }
 
