@@ -1,5 +1,6 @@
 import Foundation
 import ServiceManagement
+import AppKit
 
 struct TaskListItem: Identifiable, Decodable {
     let id: String
@@ -19,6 +20,7 @@ class AppState: ObservableObject {
     private var refreshTimer: Timer?
     private let intervalSeconds: TimeInterval = 2 * 60
     private var lastFingerprint: String? = nil
+    private var wakeObserver: Any? = nil
 
     private let projectDir: String
     private let pythonPath: String
@@ -40,6 +42,18 @@ class AppState: ObservableObject {
         scheduleTimer()
         Task { await refresh() }
         Task { await fetchAvailableLists() }
+
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.screensDidWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                guard self.isRunning else { return }
+                WallpaperManager.set(path: self.imagePath)
+            }
+        }
     }
 
     func start() {

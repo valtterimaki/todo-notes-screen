@@ -61,7 +61,8 @@ Source: `app/Sources/TodoNotesScreen/`. Built app: `TodoNotesScreen.app` (instal
 **Refresh loop (every 2 minutes):**
 1. `main.py --fingerprint` → compare SHA-256; if unchanged, skip
 2. `main.py --no-wallpaper` → render PNG
-3. `WallpaperManager.set()` — copies PNG to a unique timestamped path (busts macOS URL cache), sets via `NSWorkspace.setDesktopImageURL`, cleans up stale copies
+3. `WallpaperManager.set()` — calls `desktoppr` if installed (sets both desktop + lock screen via private WallpaperKit APIs); falls back to `NSWorkspace.setDesktopImageURL` (desktop only) if not
+4. `AppState` also re-applies the wallpaper on `screensDidWakeNotification` to prevent macOS from reverting on display wake
 
 **Menu bar features:** status line, Refresh Now, Pause/Resume, task list picker, Launch at Login (`SMAppService`), Quit
 
@@ -148,7 +149,7 @@ Always tell the user what to do next after editing anything. Use this as the gui
 If a change touches multiple areas, give the steps in order.
 
 ## Known issues
-- **macOS Sonoma+ lock screen**: `osascript` sets the *desktop* wallpaper; on Sonoma+ the lock screen is separate. It mirrors via screensaver but isn't the true lock screen. Fix: `desktoppr` CLI or Shortcuts automation.
+- **macOS Sonoma+ lock screen**: `NSWorkspace.setDesktopImageURL` only writes the desktop entry in the wallpaper database; the lock screen entry is separate. **Fixed** via `desktoppr` (`brew install desktoppr`) — uses private WallpaperKit APIs to write both entries. `WallpaperManager.swift` calls desktoppr when present, falls back to NSWorkspace. macOS also reverts wallpaper on display wake; fixed by `screensDidWakeNotification` observer in `AppState.swift`.
 - **`flask` not in `requirements.txt`**: installed in venv manually; add `flask` when recreating.
 - **`winrt` not in `requirements.txt`**: Windows-only; install manually on Windows.
 - **Subtasks not rendered**: fetched and normalised but template doesn't display them.
