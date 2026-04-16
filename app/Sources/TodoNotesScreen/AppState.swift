@@ -21,6 +21,10 @@ class AppState: ObservableObject {
     private let intervalSeconds: TimeInterval = 2 * 60
     private var lastFingerprint: String? = nil
     private var wakeObserver: Any? = nil
+    private var wallpaperChangeObserver: Any? = nil
+    // Timestamp of the last time WE set the wallpaper; used to suppress the
+    // didChangeDesktopImageNotification that our own set() call fires.
+    private var lastWallpaperSetDate: Date? = nil
 
     private let projectDir: String
     private let pythonPath: String
@@ -51,9 +55,30 @@ class AppState: ObservableObject {
             guard let self else { return }
             Task { @MainActor in
                 guard self.isRunning else { return }
-                WallpaperManager.set(path: self.imagePath)
+                self.applyWallpaper()
             }
         }
+
+        // Re-apply whenever macOS reverts the wallpaper (e.g. video wallpaper transition,
+        // System Settings change, or any other system override). Suppress if the change
+        // was fired by our own set() call (grace period: 5 seconds).
+        wallpaperChangeObserver = DistributedNotificationCenter.default().addObserver(
+            forName: NSNotification.Name("com.apple.desktop.settingsChanged"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                guard self.isRunning else { return }
+                if let last = self.lastWallpaperSetDate, Date().timeIntervalSince(last) < 5 { return }
+                self.applyWallpaper()
+            }
+        }
+    }
+
+    private func applyWallpaper() {
+        lastWallpaperSetDate = Date()
+        WallpaperManager.set(path: imagePath)
     }
 
     func start() {
@@ -76,7 +101,6 @@ class AppState: ObservableObject {
         let python = pythonPath
         let script = mainScriptPath
         let dir = projectDir
-        let image = imagePath
         let knownFingerprint = lastFingerprint
 
         let result: Result<String?, Error> = await Task.detached(priority: .background) {
@@ -130,7 +154,7 @@ class AppState: ObservableObject {
             if let fp = newFingerprint {
                 // Tasks changed — apply wallpaper and record new fingerprint
                 lastFingerprint = fp
-                WallpaperManager.set(path: image)
+                applyWallpaper()
                 lastUpdated = Date()
             }
             // nil means no change — do nothing

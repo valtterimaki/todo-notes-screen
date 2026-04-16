@@ -61,8 +61,11 @@ Source: `app/Sources/TodoNotesScreen/`. Built app: `TodoNotesScreen.app` (instal
 **Refresh loop (every 2 minutes):**
 1. `main.py --fingerprint` → compare SHA-256; if unchanged, skip
 2. `main.py --no-wallpaper` → render PNG
-3. `WallpaperManager.set()` — copies PNG to a unique timestamped path (busts macOS URL cache — required for both desktoppr and NSWorkspace), then calls `desktoppr` if installed (sets both desktop + lock screen via private WallpaperKit APIs) or falls back to `NSWorkspace.setDesktopImageURL` (desktop only); cleans up stale copies
-4. `AppState` also re-applies the wallpaper on `screensDidWakeNotification` to prevent macOS from reverting on display wake
+3. `WallpaperManager.set()` — copies PNG to a unique timestamped path (busts macOS URL cache — required for both desktoppr and NSWorkspace), then:
+   - Calls `desktoppr` if installed (sets Desktop slot via private WallpaperKit APIs) or falls back to `NSWorkspace.setDesktopImageURL`
+   - Directly patches the `Idle` (lock screen) slots in `~/Library/Application Support/com.apple.wallpaper/Store/Index.plist`, rewriting `Provider` from `com.apple.wallpaper.choice.screen-saver` to `com.apple.wallpaper.choice.image` with our PNG path; borrows `Configuration` blob from an existing Desktop entry; kills `WallpaperAgent` to reload
+   - Cleans up stale timestamped copies
+4. `AppState` also re-applies on `screensDidWakeNotification` and `com.apple.desktop.settingsChanged` (catches video wallpaper transitions and any other system override)
 
 **Menu bar features:** status line, Refresh Now, Pause/Resume, task list picker, Launch at Login (`SMAppService`), Quit
 
@@ -149,7 +152,7 @@ Always tell the user what to do next after editing anything. Use this as the gui
 If a change touches multiple areas, give the steps in order.
 
 ## Known issues
-- **macOS Sonoma+ lock screen**: `NSWorkspace.setDesktopImageURL` only writes the desktop entry in the wallpaper database; the lock screen entry is separate. **Fixed** via `desktoppr` (`brew install desktoppr`) — uses private WallpaperKit APIs to write both entries. `WallpaperManager.swift` calls desktoppr when present, falls back to NSWorkspace. macOS also reverts wallpaper on display wake; fixed by `screensDidWakeNotification` observer in `AppState.swift`.
+- **macOS Sequoia lock screen**: On Sequoia the lock screen (`Idle` slot in the wallpaper database) defaults to `com.apple.wallpaper.choice.screen-saver` (Sequoia Sunrise video) and is completely separate from the desktop. **Fixed** via direct plist patching in `WallpaperManager.applyLockScreen()`: reads `~/Library/Application Support/com.apple.wallpaper/Store/Index.plist`, rewrites all `Idle` entries to `com.apple.wallpaper.choice.image` pointing to our PNG, then kills `WallpaperAgent`. Desktop is set via `desktoppr` (`brew install desktoppr`). macOS reverts wallpaper on display wake and on video wallpaper transitions; fixed by `screensDidWakeNotification` + `com.apple.desktop.settingsChanged` observers in `AppState.swift`.
 - **`flask` not in `requirements.txt`**: installed in venv manually; add `flask` when recreating.
 - **`winrt` not in `requirements.txt`**: Windows-only; install manually on Windows.
 - **Subtasks not rendered**: fetched and normalised but template doesn't display them.
